@@ -1,4 +1,4 @@
-Fullstack сайт с использованием возможностей Nitro server, в качестве бэкенда использовал Nuxt nitro в связке с БД SQlight и ORM Prisma(в разработке)
+Fullstack сайт с использованием возможностей Nitro server(JWT аутентификация, защита от CSRF атак), в качестве бэкенда использовал Nuxt nitro в связке с БД SQlight и ORM Prisma(в разработке)
 
 # Nuxt Minimal Starter
 
