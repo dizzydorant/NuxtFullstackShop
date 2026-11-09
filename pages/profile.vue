@@ -1,11 +1,25 @@
 <script setup lang="ts">
+import { ref } from "vue";
+
 definePageMeta({
   middleware: "auth",
 });
 
 const authStore = useAuthStore();
 
-const { data: orders, error, pending } = await useFetch("/api/orders/my");
+const currentPage = ref(1);
+const itemsPerPage = 5;
+
+const {
+  data: response,
+  error,
+  pending,
+} = await useFetch<any>("/api/orders/my", {
+  query: {
+    page: currentPage,
+    limit: itemsPerPage,
+  },
+});
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -57,54 +71,92 @@ const getStatusText = (status: string) => {
       Не удалось загрузить историю заказов.
     </div>
 
-    <div v-else-if="!orders || orders.length === 0" class="no-orders-box">
+    <div
+      v-else-if="!response?.orders || response.orders.length === 0"
+      class="no-orders-box"
+    >
       <p>Вы еще не совершили ни одной покупки 😟</p>
       <NuxtLink to="/" class="shop-now-btn">Перейти в каталог товаров</NuxtLink>
     </div>
 
-    <div v-else class="orders-list">
-      <div v-for="order in orders" :key="order.id" class="order-card">
-        <div class="order-card-header">
-          <div class="order-main-info">
-            <span class="order-number">Заказ #{{ order.id }}</span>
-            <span class="order-date">{{ formatDate(order.createdAt) }}</span>
-          </div>
-          <div :class="['order-status-badge', order.status.toLowerCase()]">
-            {{ getStatusText(order.status) }}
-          </div>
-        </div>
-
-        <div class="order-items-list">
-          <div
-            v-for="item in order.items"
-            :key="item.id"
-            class="order-item-row"
-          >
-            <img
-              :src="item.product?.image || 'https://unsplash.com'"
-              class="item-mini-img"
-            />
-            <div class="item-mini-details">
-              <span class="item-mini-title">{{
-                item.product?.title || "Товар удален из каталога"
-              }}</span>
-              <span class="item-mini-meta"
-                >{{ item.price.toLocaleString() }} руб. x
-                {{ item.quantity }} шт.</span
-              >
+    <div v-else class="orders-container">
+      <div class="orders-list">
+        <div
+          v-for="order in response.orders"
+          :key="order.id"
+          class="order-card"
+        >
+          <div class="order-card-header">
+            <div class="order-main-info">
+              <span class="order-number">Заказ #{{ order.id }}</span>
+              <span class="order-date">{{ formatDate(order.createdAt) }}</span>
             </div>
-            <div class="item-mini-total">
-              {{ (item.price * item.quantity).toLocaleString() }} руб.
+            <div :class="['order-status-badge', order.status.toLowerCase()]">
+              {{ getStatusText(order.status) }}
             </div>
           </div>
+
+          <div class="order-items-list">
+            <div
+              v-for="item in order.items"
+              :key="item.id"
+              class="order-item-row"
+            >
+              <img
+                :src="item.product?.image || 'https://unsplash.com'"
+                class="item-mini-img"
+              />
+              <div class="item-mini-details">
+                <span class="item-mini-title">{{
+                  item.product?.title || "Товар удален из каталога"
+                }}</span>
+                <span class="item-mini-meta"
+                  >{{ item.price.toLocaleString() }} руб. x
+                  {{ item.quantity }} шт.</span
+                >
+              </div>
+              <div class="item-mini-total">
+                {{ (item.price * item.quantity).toLocaleString() }} руб.
+              </div>
+            </div>
+          </div>
+
+          <div class="order-card-footer">
+            <span>Итоговая сумма заказа:</span>
+            <strong class="order-total-price"
+              >{{ order.total.toLocaleString() }} руб.</strong
+            >
+          </div>
+        </div>
+      </div>
+
+      <div v-if="response.meta?.totalPages > 1" class="pagination-controls">
+        <button
+          @click="currentPage--"
+          :disabled="currentPage === 1"
+          class="page-btn arrow-btn"
+        >
+          &larr; Назад
+        </button>
+
+        <div class="page-numbers">
+          <button
+            v-for="page in response.meta.totalPages"
+            :key="page"
+            @click="currentPage = page"
+            :class="['page-btn', { active: currentPage === page }]"
+          >
+            {{ page }}
+          </button>
         </div>
 
-        <div class="order-card-footer">
-          <span>Итоговая сумма заказа:</span>
-          <strong class="order-total-price"
-            >{{ order.total.toLocaleString() }} руб.</strong
-          >
-        </div>
+        <button
+          @click="currentPage++"
+          :disabled="currentPage === response.meta.totalPages"
+          class="page-btn arrow-btn"
+        >
+          Вперед &rarr;
+        </button>
       </div>
     </div>
   </div>
@@ -281,7 +333,6 @@ const getStatusText = (status: string) => {
   color: #1e293b;
 }
 
-/* Заглушки */
 .no-orders-box {
   text-align: center;
   padding: 40px;
@@ -305,5 +356,53 @@ const getStatusText = (status: string) => {
   text-align: center;
   color: #64748b;
   padding: 20px;
+}
+
+/* СТИЛИ ДЛЯ БЛОКА ПАГИНАЦИИ */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 30px;
+  padding: 20px 0;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 8px;
+}
+
+.page-btn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: #41b883;
+  color: #41b883;
+}
+
+.page-btn.active {
+  background: #41b883;
+  border-color: #41b883;
+  color: white;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+.arrow-btn {
+  font-weight: bold;
 }
 </style>
