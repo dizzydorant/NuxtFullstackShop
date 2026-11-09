@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-// Подключаем middleware авторизации для защиты страницы
 definePageMeta({
   middleware: "auth",
 });
 
-// Подключаем наши хранилища Pinia
-const cartStore = useCartStore();
+const cartStore = useCartSore();
 const authStore = useAuthStore();
 
-// Достаем наш безопасный обработчик запросов из контекста Nuxt
 const { $csrfFetch } = useNuxtApp();
 
-// Реактивные переменные для обработки статуса заказа
 const isLoading = ref(false);
 const isSuccess = ref(false);
 const orderNumber = ref<number | null>(null);
