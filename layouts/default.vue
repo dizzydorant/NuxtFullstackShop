@@ -15,7 +15,9 @@ onMounted(() => {
       <div class="header-controls">
         <div class="auth-status">
           <template v-if="authStore.isAuthenticated">
-            <span class="user-email">👤 {{ authStore.user?.email }}</span>
+            <NuxtLink to="/profile" class="profile-link">
+              👤 {{ authStore.user?.email }}
+            </NuxtLink>
             <button @click="authStore.logout" class="logout-btn">Выйти</button>
           </template>
           <NuxtLink v-else to="/login" class="login-link"
@@ -23,11 +25,11 @@ onMounted(() => {
           >
         </div>
 
-        <div class="header-cart">
+        <NuxtLink to="/cart" class="header-cart">
           Корзина: <strong>{{ cartStore.totalCount }}</strong> шт. (<strong
             >{{ cartStore.totalPrice.toLocaleString() }} руб.</strong
           >)
-        </div>
+        </NuxtLink>
       </div>
     </header>
 
@@ -105,11 +107,30 @@ onMounted(() => {
 }
 
 .header-cart {
+  text-decoration: none;
   font-size: 16px;
   color: #2c3e50;
   background: #e8f5e9;
   padding: 10px 15px;
   border-radius: 6px;
   border: 1px solid #c8e6c9;
+  display: inline-block;
+  transition: background 0.2s;
+}
+
+.header-cart:hover {
+  background: #c8e6c9;
+}
+
+.profile-link {
+  color: #34495e;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.profile-link:hover {
+  color: #41b883;
+  text-decoration: underline;
 }
 </style>
